@@ -81,8 +81,8 @@ class EcnConfig(object):
     def set_wred_prob(self, profile, drop_color, value):
         field = WRED_CONFIG_FIELDS[drop_color]
         if self.verbose:
-            print("Setting %s value to %s\%" % (field, value))
-        self.db.mod_entry(WRED_PROFILE_TABLE_NAME, profile, {field: value})
+            print("Setting %s value to %s\%" % (drop_color, value))
+        self.db.mod_entry(WRED_PROFILE_TABLE_NAME, profile, {drop_color: value})
 
 def main():
     parser = argparse.ArgumentParser(description='Show and change ECN WRED configuration',
