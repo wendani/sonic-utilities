@@ -27,7 +27,7 @@ optional arguments:
 
 2) show and change ECN on/off status on queues
 
-usage: ecn [-h] [-v] [{on,off}] [-q QUEUE_INDEX] [-vv]
+usage: ecnconfig [-h] [-v] [-q QUEUE_INDEX] [{on,off}] [-vv]
 
 positional arguments:
   {on,off}                  turn on/off ecn
@@ -37,6 +37,14 @@ optional arguments:
   -v     --version          show program's version number and exit
   -vv    --verbose          verbose output
   -q     --queue            specify queue index list
+
+Sample outputs:
+$ecnconfig -q 3 on -vv
+Enable ECN on Ethernet0,Ethernet4,Ethernet8,Ethernet12,Ethernet16,Ethernet20,Ethernet24,Ethernet28,Ethernet32,Ethernet36,Ethernet40,Ethernet44,Ethernet48,Ethernet52,Ethernet56,Ethernet60,Ethernet64,Ethernet68,Ethernet72,Ethernet76,Ethernet80,Ethernet84,Ethernet88,Ethernet92,Ethernet96,Ethernet100,Ethernet104,Ethernet108,Ethernet112,Ethernet116,Ethernet120,Ethernet124 queue 3
+
+$ecnconfig -q 3
+ECN status:
+queue 3: on
 """
 from __future__ import print_function
 
