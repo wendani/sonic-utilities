@@ -12,6 +12,8 @@ from natsort import natsorted
 from tabulate import tabulate
 from swsssdk import ConfigDBConnector
 
+import mlnx
+
 try:
     # noinspection PyPep8Naming
     import ConfigParser as configparser
@@ -123,17 +125,7 @@ def run_command(command, display_cmd=False):
         if output == "" and proc.poll() is not None:
             break
         if output:
-            try:
-                click.echo(output.rstrip('\n'))
-            except IOError as e:
-                # In our version of Click (v6.6), click.echo() and click.echo_via_pager() do not properly handle
-                # SIGPIPE, and if a pipe is broken before all output is processed (e.g., pipe output to 'head'),
-                # it will result in a stack trace. This is apparently fixed upstream, but for now, we silently
-                # ignore SIGPIPE here.
-                if e.errno == errno.EPIPE:
-                    sys.exit(0)
-                else:
-                    raise
+            click.echo(output.rstrip('\n'))
 
     rc = proc.poll()
     if rc != 0:
@@ -159,13 +151,17 @@ def cli():
 
 @cli.command()
 @click.argument('ipaddress', required=False)
+@click.option('-if', '--iface')
 @click.option('--verbose', is_flag=True, help="Enable verbose output")
-def arp(ipaddress, verbose):
+def arp(ipaddress, iface, verbose):
     """Show IP ARP table"""
-    cmd = "/usr/sbin/arp -n"
+    cmd = "nbrshow -4"
 
     if ipaddress is not None:
-        cmd += " {}".format(ipaddress)
+        cmd += " -ip {}".format(ipaddress)
+
+    if iface is not None:
+        cmd += " -if {}".format(iface)
 
     run_command(cmd, display_cmd=verbose)
 
@@ -175,13 +171,17 @@ def arp(ipaddress, verbose):
 
 @cli.command()
 @click.argument('ip6address', required=False)
+@click.option('-if', '--iface')
 @click.option('--verbose', is_flag=True, help="Enable verbose output")
-def ndp(ip6address):
+def ndp(ip6address, iface, verbose):
     """Show IPv6 Neighbour table"""
-    cmd = "/bin/ip -6 neigh show"
+    cmd = "nbrshow -6"
 
     if ip6address is not None:
-        cmd += ' {}'.format(ip6address)
+        cmd += " -ip {}".format(ip6address)
+
+    if iface is not None:
+        cmd += " -if {}".format(iface)
 
     run_command(cmd, display_cmd=verbose)
 
@@ -450,6 +450,30 @@ def counters(interfacename, clear, verbose):
     run_command(cmd, display_cmd=verbose)
 
 #
+# 'pfc' group ###
+#
+
+@interfaces.group(cls=AliasedGroup, default_if_no_args=False)
+def pfc():
+    """Show PFC information"""
+    pass
+
+
+#
+# 'pfc status' command ###
+#
+
+@pfc.command()
+@click.argument('interface', type=click.STRING, required=False)
+def status(interface):
+    """Show PFC information"""
+    if interface is None:
+        interface = ""
+
+    run_command("pfc show asymmetric {0}".format(interface))
+
+
+#
 # 'mac' command ("show mac ...")
 #
 
@@ -607,6 +631,8 @@ def table(verbose):
 def platform():
     """Show platform-specific hardware info"""
     pass
+
+platform.add_command(mlnx.mlnx)
 
 # 'summary' subcommand ("show platform summary")
 @platform.command()
@@ -1119,6 +1145,7 @@ def ecn():
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
     click.echo(proc.stdout.read())
 
+
 #
 # 'reboot-cause' command ("show reboot-cause")
 #
@@ -1145,8 +1172,8 @@ def reboot_cause():
 @cli.command('line')
 def line():
     """Show all /dev/ttyUSB lines and their info"""
-    # TODO: Stub
-    return
+    cmd = "consutil show"
+    run_command(cmd, display_cmd=verbose)
 
 
 if __name__ == '__main__':
