@@ -42,9 +42,6 @@ def get_all_ports(db):
     port_names = db.get_all(db.COUNTERS_DB, 'COUNTERS_PORT_NAME_MAP')
     return natsorted(port_names.keys())
 
-def get_active_ports_from_configdb(cfgdb):
-    return natsorted(cfgdb.get_table('DEVICE_NEIGHBOR').keys())
-
 def get_server_facing_ports(db):
     candidates = db.get_table('DEVICE_NEIGHBOR')
     server_facing_ports = []
@@ -201,7 +198,8 @@ def start_default():
     configdb.connect()
     enable = configdb.get_entry('DEVICE_METADATA', 'localhost').get('default_pfcwd_status')
 
-    active_ports = get_active_ports_from_configdb(configdb)
+    # Get active ports from Config DB
+    active_ports = natsorted(configdb.get_table('DEVICE_NEIGHBOR').keys())
 
     if not enable or enable.lower() != "enable":
        return
