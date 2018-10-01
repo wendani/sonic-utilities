@@ -2,6 +2,7 @@
 
 import click
 import swsssdk
+import os
 from tabulate import tabulate
 from natsort import natsorted
 
