@@ -128,19 +128,27 @@ def config(ports):
 @click.argument('ports', nargs=-1)
 @click.argument('detection-time', type=click.IntRange(100, 5000))
 def start(action, restoration_time, ports, detection_time):
-    """ Start PFC watchdog on port(s). To config all ports, use all as input. """
+    """
+    Start PFC watchdog on port(s). To config all ports, use all as input.
+
+    Example:
+
+    sudo pfcwd start --action drop ports all detection-time 400 --restoration-time 400
+
+    """
     if os.geteuid() != 0:
         exit("Root privileges are required for this operation")
-    if ports.count('action') or ports.count('a'):
-        raise click.BadOptionUsage("option \"action\" / \"a\" missing prefix \"--\" / \"-\"")
-    elif ports.count('restoration-time') or ports.count('r'):
-        raise click.BadOptionUsage("option \"restoration-time\" / \"r\" missing prefix \"--\" / \"-\"")
+    allowed_strs = ['ports', 'all', 'detection-time']
     configdb = swsssdk.ConfigDBConnector()
     configdb.connect()
     countersdb = swsssdk.SonicV2Connector(host='127.0.0.1')
     countersdb.connect(countersdb.COUNTERS_DB)
 
     all_ports = get_all_ports(countersdb)
+    allowed_strs = allowed_strs + all_ports
+    for p in ports:
+        if p not in allowed_strs:
+            raise click.BadOptionUsage("Bad command line format. Try 'pfcwd start --help' for usage")
 
     if len(ports) == 0:
         ports = all_ports
@@ -154,7 +162,7 @@ def start(action, restoration_time, ports, detection_time):
         pfcwd_info['restoration_time'] = restoration_time
     else:
         pfcwd_info['restoration_time'] = 2 * detection_time
-        print "detection time not defined; default to 2 times detection time: %d ms" % (2 * detection_time)
+        print "restoration time not defined; default to 2 times detection time: %d ms" % (2 * detection_time)
 
     for port in ports:
         if port == "all":
