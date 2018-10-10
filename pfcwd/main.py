@@ -125,12 +125,16 @@ def config(ports):
 @cli.command()
 @click.option('--action', '-a', type=click.Choice(['drop', 'forward', 'alert']))
 @click.option('--restoration-time', '-r', type=click.IntRange(100, 60000))
-@click.argument('ports', nargs = -1)
+@click.argument('ports', nargs=-1)
 @click.argument('detection-time', type=click.IntRange(100, 5000))
 def start(action, restoration_time, ports, detection_time):
     """ Start PFC watchdog on port(s). To config all ports, use all as input. """
     if os.geteuid() != 0:
         exit("Root privileges are required for this operation")
+    if ports.count('action') or ports.count('a'):
+        raise click.BadOptionUsage("option \"action\" / \"a\" missing prefix \"--\" / \"-\"")
+    elif ports.count('restoration-time') or ports.count('r'):
+        raise click.BadOptionUsage("option \"restoration-time\" / \"r\" missing prefix \"--\" / \"-\"")
     configdb = swsssdk.ConfigDBConnector()
     configdb.connect()
     countersdb = swsssdk.SonicV2Connector(host='127.0.0.1')
@@ -148,6 +152,9 @@ def start(action, restoration_time, ports, detection_time):
         pfcwd_info['action'] = action
     if restoration_time is not None:
         pfcwd_info['restoration_time'] = restoration_time
+    else:
+        pfcwd_info['restoration_time'] = 2 * detection_time
+        print "detection time not defined; default to 2 times detection time: %d ms" % (2 * detection_time)
 
     for port in ports:
         if port == "all":
