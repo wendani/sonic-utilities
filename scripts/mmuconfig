@@ -86,6 +86,9 @@ def main():
         elif args.profile:
             if args.alpha:
                 mmu_cfg.set(args.profile, "alpha", args.alpha)
+        else:
+            parser.print_help()
+            sys.exit(1)
 
     except Exception as e:
         print("Exception caught:", e.message, file=sys.stderr)
