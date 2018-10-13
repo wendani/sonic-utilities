@@ -1,0 +1,51 @@
+#!/usr/bin/python
+"""
+mmuconfig is the utility to show and change mmu configuration
+
+"""
+
+from __future__ import print_function
+
+import sys
+import argparse
+import swsssdk
+import tabulate
+
+BUFFER_PROFILE_TABLE_NAME = "BUFFER_PROFILE"
+
+class MmuConfig(object):
+    def __init__(self):
+        # Set up db connections
+        self.db = swsssdk.ConfigDBConnector()
+        self.db.connect()
+
+    def list(self):
+        buf_profs = self.db.get_table(BUFFER_PROFILE_TABLE_NAME)
+        for prof_name, prof_data in buf_profs.items():
+            config = []
+
+            print("Profile: " + prof_name)
+            for field, value in prof_data.items():
+                config.append([field, value])
+            print(tabulate.tabulate(config) + "\n")
+
+def main():
+    parser = argparse.ArgumentParser(description='Show and change: mmu configuration',
+                                     version='1.0.0',
+                                     formatter_class=argparse.RawTextHelpFormatter)
+
+    parser.add_argument('-l', '--list', action='store_true', help='show mmu configuration')
+
+    args = parser.parse_args()
+
+    try:
+        cfg_mmu = MmuConfig()
+        if args.list:
+            cfg_mmu.list()
+
+    except Exception as e:
+        print("Exception caught: ", e.message, file=sys.stderr)
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
