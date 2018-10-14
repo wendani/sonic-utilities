@@ -68,12 +68,18 @@ class MmuConfig(object):
 
         field = BUFFER_PROFILE_FIELDS[field_alias]
         if field == DYNAMIC_THRESHOLD:
+            v = int(value)
+            if v < -8 or v > 8:
+                sys.exit("Invalid alpha value: 2^(%s)" % (value))
+
             buf_profs = self.db.get_table(BUFFER_PROFILE_TABLE_NAME)
             if profile in buf_profs and DYNAMIC_THRESHOLD not in buf_profs[profile]:
-                    sys.exit("%s not using dynamic threshold" % (profile))
+                sys.exit("%s not using dynamic thresholding" % (profile))
+        else:
+            sys.exit("Set field %s not supported" % (field))
 
         if self.verbose:
-            print("Setting %s value to %s" % (field, value))
+            print("Setting %s %s value to %s" % (profile, field, value))
         self.db.mod_entry(BUFFER_PROFILE_TABLE_NAME, profile, {field: value})
 
 
