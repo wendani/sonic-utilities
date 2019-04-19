@@ -18,6 +18,7 @@ from tabulate import tabulate
 headerPg = ['Port', 'PG0', 'PG1', 'PG2', 'PG3', 'PG4', 'PG5', 'PG6', 'PG7']
 headerUc = ['Port', 'UC0', 'UC1', 'UC2', 'UC3', 'UC4', 'UC5', 'UC6', 'UC7']
 headerMc = ['Port', 'MC8', 'MC9', 'MC10', 'MC11', 'MC12', 'MC13', 'MC14', 'MC15']
+headerBufferPool = ['Pool', 'Bytes']
 
 
 STATUS_NA = 'N/A'
@@ -43,6 +44,7 @@ COUNTERS_QUEUE_PORT_MAP = "COUNTERS_QUEUE_PORT_MAP"
 COUNTERS_PG_NAME_MAP = "COUNTERS_PG_NAME_MAP"
 COUNTERS_PG_PORT_MAP = "COUNTERS_PG_PORT_MAP"
 COUNTERS_PG_INDEX_MAP = "COUNTERS_PG_INDEX_MAP"
+COUNTERS_BUFFER_POOL_NAME_MAP = "COUNTERS_BUFFER_POOL_NAME_MAP"
 
 
 class Watermarkstat(object):
@@ -127,27 +129,37 @@ class Watermarkstat(object):
             port = self.port_name_map[get_pg_port(counter_pg_name_map[pg])]
             self.port_pg_map[port][pg] = counter_pg_name_map[pg]
 
+        # Get all buffer pools
+        self.buffer_pool_name_to_oid_map = self.counters_db.get_all(self.counters_db.COUNTERS_DB, COUNTERS_BUFFER_POOL_NAME_MAP)
+        if self.buffer_pool_name_to_oid_map is None:
+            print "COUNTERS_BUFFER_POOL_NAME_MAP is empty!"
+            sys.exit(1)
+
         self.watermark_types = {
-            "pg_headroom": {"message": "Ingress headroom per PG:",
-                           "obj_map": self.port_pg_map,
-                           "idx_func": self.get_pg_index,
-                           "wm_name": "SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_WATERMARK_BYTES",
-                           "header": headerPg},
-            "pg_shared": {"message": "Ingress shared pool occupancy per PG:",
-                          "obj_map": self.port_pg_map,
-                          "idx_func": self.get_pg_index,
-                          "wm_name": "SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_WATERMARK_BYTES",
-                          "header": headerPg},
-            "q_shared_uni": {"message": "Egress shared pool occupancy per unicast queue:",
-                            "obj_map": self.port_uc_queues_map,
-                            "idx_func": self.get_queue_index,
-                            "wm_name": "SAI_QUEUE_STAT_SHARED_WATERMARK_BYTES",
-                            "header": headerUc},
-            "q_shared_multi": {"message": "Egress shared pool occupancy per multicast queue:",
-                            "obj_map": self.port_mc_queues_map,
-                            "idx_func": self.get_queue_index,
-                            "wm_name": "SAI_QUEUE_STAT_SHARED_WATERMARK_BYTES",
-                            "header": headerMc}
+            "pg_headroom"   : {"message" : "Ingress headroom per PG:",
+                               "obj_map" : self.port_pg_map,
+                               "idx_func": self.get_pg_index,
+                               "wm_name" : "SAI_INGRESS_PRIORITY_GROUP_STAT_XOFF_ROOM_WATERMARK_BYTES",
+                               "header"  : headerPg},
+            "pg_shared"     : {"message" : "Ingress shared pool occupancy per PG:",
+                               "obj_map" : self.port_pg_map,
+                               "idx_func": self.get_pg_index,
+                               "wm_name" : "SAI_INGRESS_PRIORITY_GROUP_STAT_SHARED_WATERMARK_BYTES",
+                               "header"  : headerPg},
+            "q_shared_uni"  : {"message" : "Egress shared pool occupancy per unicast queue:",
+                               "obj_map" : self.port_uc_queues_map,
+                               "idx_func": self.get_queue_index,
+                               "wm_name" : "SAI_QUEUE_STAT_SHARED_WATERMARK_BYTES",
+                               "header"  : headerUc},
+            "q_shared_multi": {"message" : "Egress shared pool occupancy per multicast queue:",
+                               "obj_map" : self.port_mc_queues_map,
+                               "idx_func": self.get_queue_index,
+                               "wm_name" : "SAI_QUEUE_STAT_SHARED_WATERMARK_BYTES",
+                               "header"  : headerMc}
+            "buffer_pool"   : {"message": "Shared pool maximum occupancy:",
+                               "obj_map": self.buffer_pool_name_to_oid_map,
+                               "wm_name": "SAI_BUFFER_POOL_STAT_WATERMARK_BYTES",
+                               "header" : headerBufferPool}
         }
 
     def get_queue_index(self, table_id):
@@ -185,13 +197,21 @@ class Watermarkstat(object):
         return cntr
 
     def get_print_all_stat(self, table_prefix, type):
-        # Get stat for each port
         table = []
-        for port in natsorted(self.counter_port_name_map):
-            data = self.get_counters(table_prefix,
-                                     type["obj_map"][port], type["idx_func"], type["wm_name"])
-            table.append((port, data[0], data[1], data[2], data[3],
-                        data[4], data[5], data[6], data[7]))
+        if type == 'buffer_pool':
+            # Get stats for each buffer pool
+            for buf_pool, bp_oid in natsorted(self.buffer_pool_name_to_oid_map.items()):
+                key = table_prefix + bp_oid
+                data = self.counters_db.get(self.counters_db.COUNTERS_DB, key, type["wm_name"])
+                table.append((buf_pool, data))
+        else:
+            # Get stat for each port
+            for port in natsorted(self.counter_port_name_map):
+                data = self.get_counters(table_prefix,
+                                         type["obj_map"][port], type["idx_func"], type["wm_name"])
+                table.append((port, data[0], data[1], data[2], data[3],
+                              data[4], data[5], data[6], data[7]))
+
         print(type["message"])
         print tabulate(table, type["header"], tablefmt='simple', stralign='right')
 
@@ -214,12 +234,15 @@ Examples:
   watermarkstat -t q_shared_multi -c
   watermarkstat -p -t pg_shared
   watermarkstat -p -t q_shared_multi -c
+  watermarkstat -t buffer_pool
+  watermarkstat -t buffer_pool -c
+  watermarkstat -p -t buffer_pool -c
 """)
 
     parser.add_argument('-c', '--clear', action='store_true', help='Clear watermarks request')
     parser.add_argument('-p', '--persistent', action='store_true', help='Do the operations on the persistent watermark')
     parser.add_argument('-t', '--type', required=True, action='store',
-                        choices=['pg_headroom', 'pg_shared', 'q_shared_uni', 'q_shared_multi'],
+                        choices=['pg_headroom', 'pg_shared', 'q_shared_uni', 'q_shared_multi', 'buffer_pool'],
                         help='The type of watermark')
     args = parser.parse_args()
     watermarkstat = Watermarkstat()
