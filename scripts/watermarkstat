@@ -157,7 +157,6 @@ class Watermarkstat(object):
                                "wm_name" : "SAI_QUEUE_STAT_SHARED_WATERMARK_BYTES",
                                "header"  : headerMc}
             "buffer_pool"   : {"message": "Shared pool maximum occupancy:",
-                               "obj_map": self.buffer_pool_name_to_oid_map,
                                "wm_name": "SAI_BUFFER_POOL_STAT_WATERMARK_BYTES",
                                "header" : headerBufferPool}
         }
@@ -183,7 +182,7 @@ class Watermarkstat(object):
             Get the counters from specific table.
         """
 
-        fields = ["0"]*8
+        fields = ["0"] * 8
 
         for name, obj_id in port_obj.items():
             full_table_id = table_prefix + obj_id
@@ -203,6 +202,8 @@ class Watermarkstat(object):
             for buf_pool, bp_oid in natsorted(self.buffer_pool_name_to_oid_map.items()):
                 key = table_prefix + bp_oid
                 data = self.counters_db.get(self.counters_db.COUNTERS_DB, key, type["wm_name"])
+                if data is None:
+                    data = STATUS_NA
                 table.append((buf_pool, data))
         else:
             # Get stat for each port
