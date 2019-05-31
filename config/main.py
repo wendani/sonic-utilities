@@ -9,7 +9,8 @@ import netaddr
 import re
 import syslog
 
-import sonic_platform
+import sonic_device_util
+import ipaddress
 from swsssdk import ConfigDBConnector
 from swsssdk import SonicV2Connector
 from minigraph import parse_device_desc_xml
@@ -387,6 +388,12 @@ def reload(filename, yes, load_sysinfo):
     command = "{} -j {} --write-to-db".format(SONIC_CFGGEN_PATH, filename)
     run_command(command, display_cmd=True)
     client.set(config_db.INIT_INDICATOR, 1)
+
+    # Migrate DB contents to latest version
+    db_migrator='/usr/bin/db_migrator.py'
+    if os.path.isfile(db_migrator) and os.access(db_migrator, os.X_OK):
+        run_command(db_migrator + ' -o migrate')
+
     _restart_services()
 
 @config.command()
@@ -437,6 +444,12 @@ def load_minigraph():
     if os.path.isfile('/etc/sonic/acl.json'):
         run_command("acl-loader update full /etc/sonic/acl.json", display_cmd=True)
     run_command("config qos reload", display_cmd=True)
+
+    # Write latest db version string into db
+    db_migrator='/usr/bin/db_migrator.py'
+    if os.path.isfile(db_migrator) and os.access(db_migrator, os.X_OK):
+        run_command(db_migrator + ' -o set_version')
+
     #FIXME: After config DB daemon is implemented, we'll no longer need to restart every service.
     _restart_services()
     click.echo("Please note setting loaded from minigraph will be lost after system reboot. To preserve setting, run `config save`.")
@@ -518,7 +531,8 @@ def mirror_session():
 @click.argument('ttl', metavar='<ttl>', required=True)
 @click.argument('gre_type', metavar='[gre_type]', required=False)
 @click.argument('queue', metavar='[queue]', required=False)
-def add(session_name, src_ip, dst_ip, dscp, ttl, gre_type, queue):
+@click.option('--policer')
+def add(session_name, src_ip, dst_ip, dscp, ttl, gre_type, queue, policer):
     """
     Add mirror session
     """
@@ -531,6 +545,9 @@ def add(session_name, src_ip, dst_ip, dscp, ttl, gre_type, queue):
             "dscp": dscp,
             "ttl": ttl
             }
+
+    if policer is not None:
+        session_info['policer'] = policer
 
     if gre_type is not None:
         session_info['gre_type'] = gre_type
@@ -934,12 +951,20 @@ def add(ctx, interface_name, ip_addr):
         if interface_name is None:
             ctx.fail("'interface_name' is None!")
 
-    if interface_name.startswith("Ethernet"):
-        config_db.set_entry("INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
-    elif interface_name.startswith("PortChannel"):
-        config_db.set_entry("PORTCHANNEL_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
-    elif interface_name.startswith("Vlan"):
-        config_db.set_entry("VLAN_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
+    try:
+        ipaddress.ip_network(unicode(ip_addr), strict=False)
+        if interface_name.startswith("Ethernet"):
+            config_db.set_entry("INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
+        elif interface_name.startswith("PortChannel"):
+            config_db.set_entry("PORTCHANNEL_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
+        elif interface_name.startswith("Vlan"):
+            config_db.set_entry("VLAN_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
+        elif interface_name.startswith("Loopback"):
+            config_db.set_entry("LOOPBACK_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
+        else:
+            ctx.fail("'interface_name' is not valid. Valid names [Ethernet/PortChannel/Vlan/Loopback]")
+    except ValueError:
+        ctx.fail("'ip_addr' is not valid.")
 
 #
 # 'del' subcommand
@@ -957,13 +982,20 @@ def remove(ctx, interface_name, ip_addr):
         if interface_name is None:
             ctx.fail("'interface_name' is None!")
 
-    if interface_name.startswith("Ethernet"):
-        config_db.set_entry("INTERFACE", (interface_name, ip_addr), None)
-    elif interface_name.startswith("PortChannel"):
-        config_db.set_entry("PORTCHANNEL_INTERFACE", (interface_name, ip_addr), None)
-    elif interface_name.startswith("Vlan"):
-        config_db.set_entry("VLAN_INTERFACE", (interface_name, ip_addr), None)
-
+    try:
+        ipaddress.ip_network(unicode(ip_addr), strict=False)
+        if interface_name.startswith("Ethernet"):
+            config_db.set_entry("INTERFACE", (interface_name, ip_addr), None)
+        elif interface_name.startswith("PortChannel"):
+            config_db.set_entry("PORTCHANNEL_INTERFACE", (interface_name, ip_addr), None)
+        elif interface_name.startswith("Vlan"):
+            config_db.set_entry("VLAN_INTERFACE", (interface_name, ip_addr), None)
+        elif interface_name.startswith("Loopback"):
+            config_db.set_entry("LOOPBACK_INTERFACE", (interface_name, ip_addr), None)
+        else:
+            ctx.fail("'interface_name' is not valid. Valid names [Ethernet/PortChannel/Vlan/Loopback]")
+    except ValueError:
+        ctx.fail("'ip_addr' is not valid.")
 #
 # 'acl' group ('config acl ...')
 #
@@ -1065,7 +1097,7 @@ def asymmetric(ctx, status):
 def platform():
     """Platform-related configuration tasks"""
 
-version_info = sonic_platform.get_sonic_version_info()
+version_info = sonic_device_util.get_sonic_version_info()
 if (version_info and version_info.get('asic_type') == 'mellanox'):
     platform.add_command(mlnx.mlnx)
 
