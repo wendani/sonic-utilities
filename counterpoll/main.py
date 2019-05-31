@@ -5,6 +5,9 @@ import swsssdk
 from tabulate import tabulate
 
 BUFFER_POOL_WATERMARK = "BUFFER_POOL_WATERMARK"
+DISABLE = "disable"
+DEFLT_10_SEC= "default (10000)"
+DEFLT_1_SEC = "default (1000)"
 
 @click.group()
 def cli():
@@ -171,17 +174,17 @@ def show():
     header = ("Type", "Interval (in ms)", "Status")
     data = []
     if queue_info:
-        data.append(["QUEUE_STAT", queue_info["POLL_INTERVAL"] if 'POLL_INTERVAL' in queue_info else 'default (10000)', queue_info["FLEX_COUNTER_STATUS"] if 'FLEX_COUNTER_STATUS' in queue_info else 'disable' ])
+        data.append(["QUEUE_STAT", queue_info.get("POLL_INTERVAL", DEFLT_10_SEC), queue_info.get("FLEX_COUNTER_STATUS", DISABLE)])
     if port_info:
-        data.append(["PORT_STAT", port_info["POLL_INTERVAL"] if 'POLL_INTERVAL' in port_info else 'default (1000)', port_info["FLEX_COUNTER_STATUS"] if 'FLEX_COUNTER_STATUS' in port_info else 'disable'])
+        data.append(["PORT_STAT", port_info.get("POLL_INTERVAL", DEFLT_1_SEC), port_info.get("FLEX_COUNTER_STATUS", DISABLE)])
     if rif_info:
-        data.append(["RIF_STAT", rif_info["POLL_INTERVAL"] if 'POLL_INTERVAL' in rif_info else 'default (1000)', rif_info["FLEX_COUNTER_STATUS"] if 'FLEX_COUNTER_STATUS' in rif_info else 'disable'])
+        data.append(["RIF_STAT", rif_info.get("POLL_INTERVAL", DEFLT_1_SEC), rif_info.get("FLEX_COUNTER_STATUS", DISABLE)])
     if queue_wm_info:
-        data.append(["QUEUE_WATERMARK_STAT", queue_wm_info["POLL_INTERVAL"] if 'POLL_INTERVAL' in queue_wm_info else 'default (10000)', queue_wm_info["FLEX_COUNTER_STATUS"] if 'FLEX_COUNTER_STATUS' in queue_wm_info else 'disable' ])
+        data.append(["QUEUE_WATERMARK_STAT", queue_wm_info.get("POLL_INTERVAL", DEFLT_10_SEC), queue_wm_info.get("FLEX_COUNTER_STATUS", DISABLE)])
     if pg_wm_info:
-        data.append(["PG_WATERMARK_STAT", pg_wm_info["POLL_INTERVAL"] if 'POLL_INTERVAL' in pg_wm_info else 'default (10000)', pg_wm_info["FLEX_COUNTER_STATUS"] if 'FLEX_COUNTER_STATUS' in pg_wm_info else 'disable'])
+        data.append(["PG_WATERMARK_STAT", pg_wm_info.get("POLL_INTERVAL", DEFLT_10_SEC), pg_wm_info.get("FLEX_COUNTER_STATUS", DISABLE)])
     if buffer_pool_wm_info:
-        data.append(["BUFFER_POOL_WATERMARK_STAT", buffer_pool_wm_info["POLL_INTERVAL"] if 'POLL_INTERVAL' in buffer_pool_wm_info else 'default (10000)', buffer_pool_wm_info["FLEX_COUNTER_STATUS"] if 'FLEX_COUNTER_STATUS' in buffer_pool_wm_info else 'disable'])
+        data.append(["BUFFER_POOL_WATERMARK_STAT", buffer_pool_wm_info.get("POLL_INTERVAL", DEFLT_10_SEC), buffer_pool_wm_info.get("FLEX_COUNTER_STATUS", DISABLE)])
 
     print tabulate(data, headers=header, tablefmt="simple", missingval="")
 
