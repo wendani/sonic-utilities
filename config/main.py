@@ -1380,16 +1380,16 @@ def naming_mode_alias():
 #
 # 'syslog' group ('config syslog ...')
 #
-@config.group()
+@config.group('syslog')
 @click.pass_context
-def syslog(ctx):
+def syslog_group(ctx):
     """Syslog server configuration tasks"""
     config_db = ConfigDBConnector()
     config_db.connect()
     ctx.obj = {'db': config_db}
     pass
 
-@syslog.command('add')
+@syslog_group.command('add')
 @click.argument('syslog_ip_address', metavar='<syslog_ip_address>', required=True)
 @click.pass_context
 def add_syslog_server(ctx, syslog_ip_address):
@@ -1401,7 +1401,7 @@ def add_syslog_server(ctx, syslog_ip_address):
     if syslog_ip_address in syslog_servers:
         click.echo("Syslog server {} is already configured".format(syslog_ip_address))
         return
-    else: 
+    else:
         db.set_entry('SYSLOG_SERVER', syslog_ip_address, {'NULL': 'NULL'})
         click.echo("Syslog server {} added to configuration".format(syslog_ip_address))
         try:
@@ -1410,7 +1410,7 @@ def add_syslog_server(ctx, syslog_ip_address):
         except SystemExit as e:
             ctx.fail("Restart service rsyslog-config failed with error {}".format(e))
 
-@syslog.command('del')
+@syslog_group.command('del')
 @click.argument('syslog_ip_address', metavar='<syslog_ip_address>', required=True)
 @click.pass_context
 def del_syslog_server(ctx, syslog_ip_address):
@@ -1422,7 +1422,7 @@ def del_syslog_server(ctx, syslog_ip_address):
     if syslog_ip_address in syslog_servers:
         db.set_entry('SYSLOG_SERVER', '{}'.format(syslog_ip_address), None)
         click.echo("Syslog server {} removed from configuration".format(syslog_ip_address))
-    else: 
+    else:
         ctx.fail("Syslog server {} is not configured.".format(syslog_ip_address))
     try:
         click.echo("Restarting rsyslog-config service...")
