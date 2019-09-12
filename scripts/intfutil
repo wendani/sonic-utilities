@@ -346,16 +346,16 @@ class IntfStatus(object):
             key = re.split(':', i, maxsplit=1)[-1].strip()
             if key in front_panel_ports_list:
                 table.append((key,
-                              appl_db_port_status_get(self.appl_db, key, PORT_LANES_STATUS),
-                              appl_db_port_status_get(self.appl_db, key, PORT_SPEED),
-                              appl_db_port_status_get(self.appl_db, key, PORT_MTU_STATUS),
-                              appl_db_port_status_get(self.appl_db, key, PORT_ALIAS),
-                              config_db_vlan_port_keys_get(self.combined_int_to_vlan_po_dict, self.front_panel_ports_list, key),
-                              appl_db_port_status_get(self.appl_db, key, PORT_OPER_STATUS),
-                              appl_db_port_status_get(self.appl_db, key, PORT_ADMIN_STATUS),
-                              state_db_port_optics_get(self.state_db, key, PORT_OPTICS_TYPE),
-                              appl_db_port_status_get(self.appl_db, key, PORT_PFC_ASYM_STATUS)))
-        # Sorting and tabulating the result table.
+                            appl_db_port_status_get(self.appl_db, key, PORT_LANES_STATUS),
+                            appl_db_port_status_get(self.appl_db, key, PORT_SPEED),
+                            appl_db_port_status_get(self.appl_db, key, PORT_MTU_STATUS),
+                            appl_db_port_status_get(self.appl_db, key, PORT_ALIAS),
+                            config_db_vlan_port_keys_get(self.combined_int_to_vlan_po_dict, self.front_panel_ports_list, key),
+                            appl_db_port_status_get(self.appl_db, key, PORT_OPER_STATUS),
+                            appl_db_port_status_get(self.appl_db, key, PORT_ADMIN_STATUS),
+                            state_db_port_optics_get(self.state_db, key, PORT_OPTICS_TYPE),
+                            appl_db_port_status_get(self.appl_db, key, PORT_PFC_ASYM_STATUS)))
+
         for po, value in portchannel_speed_dict.iteritems():
             if po:
                 table.append((po,
