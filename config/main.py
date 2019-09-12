@@ -79,7 +79,7 @@ def interface_alias_to_name(interface_alias):
     sub_intf_sep_idx = -1
     if interface_alias is not None:
         sub_intf_sep_idx = interface_alias.find(VLAN_SUB_INTERFACE_SEPARATOR)
-        if (sub_intf_sep_idx != -1):
+        if sub_intf_sep_idx != -1:
             vlan_id = interface_alias[sub_intf_sep_idx + 1:]
             # interface_alias holds the parent port name so the subsequent logic still applies
             interface_alias = interface_alias[:sub_intf_sep_idx]
