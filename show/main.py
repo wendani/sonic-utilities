@@ -675,7 +675,7 @@ def subinterfaces():
 @click.option('--verbose', is_flag=True, help="Enable verbose output")
 def status(verbose):
     """Show sub port interface status information"""
-    cmd = "intfutil status"
+    cmd = "intfutil status subport"
     run_command(cmd, display_cmd=verbose)
 
 #
