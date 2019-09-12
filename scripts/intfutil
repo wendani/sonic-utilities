@@ -120,7 +120,7 @@ def appl_db_sub_intf_keys_get(appl_db, sub_intf_list, sub_intf_name):
     elif sub_intf_name in sub_intf_list:
         appl_db_sub_intf_keys = appl_db.keys(appl_db.APPL_DB, "INTF_TABLE:%s" % sub_intf_name)
     else:
-        return None
+        return []
     return appl_db_sub_intf_keys
 
 
@@ -300,7 +300,7 @@ def appl_db_portchannel_status_get(appl_db, config_db, po_name, status_type, por
 
 def appl_db_sub_intf_status_get(appl_db, config_db, front_panel_ports_list, portchannel_speed_dict, sub_intf_name, status_type):
     sub_intf_sep_idx = sub_intf_name.find(VLAN_SUB_INTERFACE_SEPARATOR)
-    if (sub_intf_sep_idx != -1):
+    if sub_intf_sep_idx != -1:
         parent_port_name = sub_intf_name[:sub_intf_sep_idx]
         vlan_id = sub_intf_name[sub_intf_sep_idx + 1:]
 
@@ -421,9 +421,17 @@ class IntfStatus(object):
             return
 
         sub_intf_only = False
-        if intf_name is not None and intf_name == SUB_PORT:
-            intf_name = None
-            sub_intf_only = True
+        sub_intf_name = intf_name
+        if intf_name is not None:
+            if intf_name == SUB_PORT:
+                intf_name = None
+                sub_intf_name = None
+                sub_intf_only = True
+            else:
+                sub_intf_sep_idx = intf_name.find(VLAN_SUB_INTERFACE_SEPARATOR)
+                if sub_intf_sep_idx != -1:
+                    sub_intf_only = True
+                    intf_name = intf_name[:sub_intf_sep_idx]
 
         self.front_panel_ports_list = get_frontpanel_port_list(self.config_db)
         appl_db_keys = appl_db_keys_get(self.appl_db, self.front_panel_ports_list, intf_name)
@@ -438,7 +446,7 @@ class IntfStatus(object):
         self.portchannel_keys = self.portchannel_speed_dict.keys()
 
         self.sub_intf_list = get_sub_port_intf_list(self.config_db)
-        appl_db_sub_intf_keys = appl_db_sub_intf_keys_get(self.appl_db, self.sub_intf_list, intf_name)
+        appl_db_sub_intf_keys = appl_db_sub_intf_keys_get(self.appl_db, self.sub_intf_list, sub_intf_name)
         if appl_db_keys is None:
             return
         self.display_intf_status(appl_db_keys, self.front_panel_ports_list, self.portchannel_speed_dict, appl_db_sub_intf_keys, self.sub_intf_list, sub_intf_only)
