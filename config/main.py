@@ -75,7 +75,7 @@ def interface_alias_to_name(interface_alias):
     config_db.connect()
     port_dict = config_db.get_table('PORT')
 
-    vlan_id = -1
+    vlan_id = ""
     sub_intf_sep_idx = -1
     if interface_alias is not None:
         sub_intf_sep_idx = interface_alias.find(VLAN_SUB_INTERFACE_SEPARATOR)
