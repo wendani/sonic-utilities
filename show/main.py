@@ -662,6 +662,23 @@ def portchannel(verbose):
     run_command(cmd, display_cmd=verbose)
 
 #
+# 'subinterfaces' group ("show subinterfaces ...")
+#
+
+@cli.group(cls=AliasedGroup, default_if_no_args=False)
+def subinterfaces():
+    """Show details of the sub port interfaces"""
+    pass
+
+# 'subinterfaces' subcommand ("show subinterfaces status")
+@subinterfaces.command()
+@click.option('--verbose', is_flag=True, help="Enable verbose output")
+def status(verbose):
+    """Show sub port interface status information"""
+    cmd = "intfutil status"
+    run_command(cmd, display_cmd=verbose)
+
+#
 # 'pfc' group ("show pfc ...")
 #
 
