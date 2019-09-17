@@ -1045,7 +1045,10 @@ def startup(ctx, interface_name):
         else:
             config_db.mod_entry("PORT", interface_name, {"admin_status": "up"})
     elif interface_name.startswith("PortChannel"):
-        config_db.mod_entry("PORTCHANNEL", interface_name, {"admin_status": "up"})
+        if VLAN_SUB_INTERFACE_SEPARATOR in interface_name:
+            config_db.mod_entry("VLAN_SUB_INTERFACE", interface_name, {"admin_status": "up"})
+        else:
+            config_db.mod_entry("PORTCHANNEL", interface_name, {"admin_status": "up"})
 #
 # 'shutdown' subcommand
 #
@@ -1070,7 +1073,10 @@ def shutdown(ctx, interface_name):
         else:
             config_db.mod_entry("PORT", interface_name, {"admin_status": "down"})
     elif interface_name.startswith("PortChannel"):
-        config_db.mod_entry("PORTCHANNEL", interface_name, {"admin_status": "down"})
+        if VLAN_SUB_INTERFACE_SEPARATOR in interface_name:
+            config_db.mod_entry("VLAN_SUB_INTERFACE", interface_name, {"admin_status": "down"})
+        else:
+            config_db.mod_entry("PORTCHANNEL", interface_name, {"admin_status": "down"})
 
 #
 # 'speed' subcommand
