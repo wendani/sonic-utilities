@@ -1122,11 +1122,19 @@ def add(ctx, interface_name, ip_addr):
     try:
         ipaddress.ip_network(unicode(ip_addr), strict=False)
         if interface_name.startswith("Ethernet"):
-            config_db.set_entry("INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
-            config_db.set_entry("INTERFACE", interface_name, {"NULL": "NULL"})
+            if VLAN_SUB_INTERFACE_SEPARATOR in interface_name:
+                config_db.set_entry("VLAN_SUB_INTERFACE", interface_name, {"admin_status": "up"})
+                config_db.set_entry("VLAN_SUB_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
+            else:
+                config_db.set_entry("INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
+                config_db.set_entry("INTERFACE", interface_name, {"NULL": "NULL"})
         elif interface_name.startswith("PortChannel"):
-            config_db.set_entry("PORTCHANNEL_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
-            config_db.set_entry("PORTCHANNEL_INTERFACE", interface_name, {"NULL": "NULL"})
+            if VLAN_SUB_INTERFACE_SEPARATOR in interface_name:
+                config_db.set_entry("VLAN_SUB_INTERFACE", interface_name, {"admin_status": "up"})
+                config_db.set_entry("VLAN_SUB_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
+            else:
+                config_db.set_entry("PORTCHANNEL_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
+                config_db.set_entry("PORTCHANNEL_INTERFACE", interface_name, {"NULL": "NULL"})
         elif interface_name.startswith("Vlan"):
             config_db.set_entry("VLAN_INTERFACE", (interface_name, ip_addr), {"NULL": "NULL"})
             config_db.set_entry("VLAN_INTERFACE", interface_name, {"NULL": "NULL"})
@@ -1157,11 +1165,19 @@ def remove(ctx, interface_name, ip_addr):
     try:
         ipaddress.ip_network(unicode(ip_addr), strict=False)
         if interface_name.startswith("Ethernet"):
-            config_db.set_entry("INTERFACE", (interface_name, ip_addr), None)
-            if_table = "INTERFACE"
+            if VLAN_SUB_INTERFACE_SEPARATOR in interface_name:
+                config_db.set_entry("VLAN_SUB_INTERFACE", (interface_name, ip_addr), None)
+                if_table = "VLAN_SUB_INTERFACE"
+            else:
+                config_db.set_entry("INTERFACE", (interface_name, ip_addr), None)
+                if_table = "INTERFACE"
         elif interface_name.startswith("PortChannel"):
-            config_db.set_entry("PORTCHANNEL_INTERFACE", (interface_name, ip_addr), None)
-            if_table = "PORTCHANNEL_INTERFACE"
+            if VLAN_SUB_INTERFACE_SEPARATOR in interface_name:
+                config_db.set_entry("VLAN_SUB_INTERFACE", (interface_name, ip_addr), None)
+                if_table = "VLAN_SUB_INTERFACE"
+            else:
+                config_db.set_entry("PORTCHANNEL_INTERFACE", (interface_name, ip_addr), None)
+                if_table = "PORTCHANNEL_INTERFACE"
         elif interface_name.startswith("Vlan"):
             config_db.set_entry("VLAN_INTERFACE", (interface_name, ip_addr), None)
             if_table = "VLAN_INTERFACE"
