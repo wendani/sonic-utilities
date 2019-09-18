@@ -347,19 +347,13 @@ def _reset_failed_services():
         'teamd'
     ]
 
-    command = "systemctl --failed | grep failed | awk '{ print $2 }' | awk -F'.' '{ print $1 }'"
-    proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
-    (out, err) = proc.communicate()
-    failed_services = out.rstrip('\n').split('\n')
-
-    for service in failed_services:
-        if service in services_to_reset:
-            try:
-                click.echo("Resetting failed service {} ...".format(service))
-                run_command("systemctl reset-failed {}".format(service))
-            except SystemExit as e:
-                log_error("Failed to reset service {}".format(service))
-                raise
+    for service in services_to_reset:
+        try:
+            click.echo("Resetting failed status for service {} ...".format(service))
+            run_command("systemctl reset-failed {}".format(service))
+        except SystemExit as e:
+            log_error("Failed to reset failed status for service {}".format(service))
+            raise
 
 def _restart_services():
     services_to_restart = [
@@ -1333,14 +1327,17 @@ def pfc(ctx):
 #
 
 @pfc.command()
+@click.argument('interface_name', metavar='<interface_name>', required=True)
 @click.argument('status', type=click.Choice(['on', 'off']))
 @click.pass_context
-def asymmetric(ctx, status):
+def asymmetric(ctx, interface_name, status):
     """Set asymmetric PFC configuration."""
-    config_db = ctx.obj["config_db"]
-    interface = ctx.obj["interface_name"]
+    if get_interface_naming_mode() == "alias":
+        interface_name = interface_alias_to_name(interface_name)
+        if interface_name is None:
+            ctx.fail("'interface_name' is None!")
 
-    run_command("pfc config asymmetric {0} {1}".format(status, interface))
+    run_command("pfc config asymmetric {0} {1}".format(status, interface_name))
 
 #
 # 'platform' group ('config platform ...')
