@@ -695,15 +695,20 @@ def subinterfaces():
 @click.option('--verbose', is_flag=True, help="Enable verbose output")
 def status(subinterfacename, verbose):
     """Show sub port interface status information"""
-    cmd = "intfutil status"
+    cmd = "intfutil status "
 
     if subinterfacename is not None:
+        sub_intf_sep_idx = subinterfacename.find(VLAN_SUB_INTERFACE_SEPARATOR)
+        if sub_intf_sep_idx == -1:
+            print("Invalid sub port interface name")
+            return
+
         if get_interface_mode() == "alias":
             subinterfacename = iface_alias_converter.alias_to_name(subinterfacename)
 
-        cmd += " {}".format(subinterfacename)
+        cmd += subinterfacename
     else:
-        cmd += " subport"
+        cmd += "subport"
     run_command(cmd, display_cmd=verbose)
 
 #
