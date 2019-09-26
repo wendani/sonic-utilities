@@ -26,7 +26,7 @@ PORT_OPTICS_TYPE = "type"
 PORT_PFC_ASYM_STATUS = "pfc_asym"
 
 VLAN_SUB_INTERFACE_SEPARATOR = "."
-VLAN_SUB_INTERFACE_TYPE = "dot1q-encapsulation"
+VLAN_SUB_INTERFACE_TYPE = "802.1q-encapsulation"
 
 SUB_PORT = "subport"
 
