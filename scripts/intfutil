@@ -8,7 +8,18 @@ from tabulate import tabulate
 from natsort import natsorted
 from swsssdk import ConfigDBConnector
 from pprint import pprint
+import os
 
+# mock the redis for unit test purposes #
+try:
+    if os.environ["UTILITIES_UNIT_TESTING"] == "1":
+        modules_path = os.path.join(os.path.dirname(__file__), "..")
+        tests_path = os.path.join(modules_path, "sonic-utilities-tests")
+        sys.path.insert(0, modules_path)
+        sys.path.insert(0, tests_path)
+        import mock_tables.dbconnector
+except KeyError:
+    pass
 
 # ========================== Common interface-utils logic ==========================
 
@@ -114,9 +125,10 @@ def appl_db_sub_intf_keys_get(appl_db, sub_intf_list, sub_intf_name):
     if sub_intf_name is None:
         appl_db_sub_intf_keys = []
         appl_db_intf_keys = appl_db.keys(appl_db.APPL_DB, "INTF_TABLE:*")
-        for appl_db_intf_key in appl_db_intf_keys:
-            if re.split(':', appl_db_intf_key, maxsplit=1)[-1].strip() in sub_intf_list:
-                appl_db_sub_intf_keys.append(appl_db_intf_key)
+        if appl_db_intf_keys is not None:
+            for appl_db_intf_key in appl_db_intf_keys:
+                if re.split(':', appl_db_intf_key, maxsplit=1)[-1].strip() in sub_intf_list:
+                    appl_db_sub_intf_keys.append(appl_db_intf_key)
     elif sub_intf_name in sub_intf_list:
         appl_db_sub_intf_keys = appl_db.keys(appl_db.APPL_DB, "INTF_TABLE:%s" % sub_intf_name)
     else:
