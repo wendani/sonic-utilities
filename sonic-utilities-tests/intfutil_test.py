@@ -88,7 +88,7 @@ class TestIntfutil(TestCase):
         print >> sys.stderr, output
         self.assertEqual(output.strip(), expected_output)
 
-    # Test '--verbose' of single sub interface status
+    # Test '--verbose' status of single sub interface
     def test_single_subintf_status_verbose(self):
         result = self.runner.invoke(show.cli.commands["subinterfaces"].commands["status"], ["Ethernet0.10", "--verbose"])
         print >> sys.stderr, result.output
@@ -96,9 +96,10 @@ class TestIntfutil(TestCase):
         self.assertEqual(result.output.split('\n')[0], expected_output)
 
 
-    # Test alias mode of single sub interface status
+    # Test status of single sub interface in alias naming mode
     def test_single_subintf_status_alias_mode(self):
         os.environ["SONIC_CLI_IFACE_MODE"] = "alias"
+
         result = self.runner.invoke(show.cli.commands["subinterfaces"].commands["status"], ["etp1.10"])
         print >> sys.stderr, result.output
         expected_output = (
@@ -107,10 +108,19 @@ class TestIntfutil(TestCase):
           "        Ethernet0.10      25G   9100      10       up  802.1q-encapsulation"
         )
         self.assertEqual(result.output.strip(), expected_output)
+
         os.environ["SONIC_CLI_IFACE_MODE"] = "default"
 
-        assert(0)
-    # Test '--verbose' alias mode of single sub interface status
+    # Test '--verbose' status of single sub interface in alias naming mode
+    def test_single_subintf_status_alias_mode_verbose(self):
+        os.environ["SONIC_CLI_IFACE_MODE"] = "alias"
+
+        result = self.runner.invoke(show.cli.commands["subinterfaces"].commands["status"], ["etp1.10", "--verbose"])
+        print >> sys.stderr, result.output
+        expected_output = "Command: intfutil status Ethernet0.10"
+        self.assertEqual(result.output.split('\n')[0], expected_output)
+
+        os.environ["SONIC_CLI_IFACE_MODE"] = "default"
 
     @classmethod
     def teardown_class(cls):
