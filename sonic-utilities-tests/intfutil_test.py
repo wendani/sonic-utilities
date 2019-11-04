@@ -60,6 +60,13 @@ class TestIntfutil(TestCase):
         print >> sys.stderr, output
         self.assertEqual(output.strip(), expected_output)
 
+    # Test 'show subinterfaces status --verbose'
+    def test_subintf_status_verbose(self):
+        result = self.runner.invoke(show.cli.commands["subinterfaces"].commands["status"], ["--verbose"])
+        print >> sys.stderr, result.output
+        expected_output = "Command: intfutil status subport"
+        self.assertEqual(result.output.split('\n')[0], expected_output)
+
         assert(0)
 
     @classmethod
