@@ -43,6 +43,23 @@ class TestIntfutil(TestCase):
         print >> sys.stderr, result.output
         expected_output = "Command: intfutil status"
         self.assertEqual(result.output.split('\n')[0], expected_output)
+
+    # Test 'show subinterfaces status' / 'intfutil status subport'
+    def test_subintf_status(self):
+        # Test 'show subinterfaces status'
+        result = self.runner.invoke(show.cli.commands["subinterfaces"].commands["status"], [])
+        print >> sys.stderr, result.output
+        expected_output = (
+            "Sub port interface    Speed    MTU    Vlan    Admin                  Type\n"
+          "--------------------  -------  -----  ------  -------  --------------------\n"
+          "        Ethernet0.10      25G   9100      10       up  802.1q-encapsulation"
+        )
+
+        # Test 'intfutil status subport'
+        output = subprocess.check_output('intfutil status subport', stderr=subprocess.STDOUT, shell=True)
+        print >> sys.stderr, output
+        self.assertEqual(output.strip(), expected_output)
+
         assert(0)
 
     @classmethod
