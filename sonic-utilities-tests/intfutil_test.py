@@ -36,10 +36,14 @@ class TestIntfutil(TestCase):
         output = subprocess.check_output('intfutil status', stderr=subprocess.STDOUT, shell=True)
         print >> sys.stderr, output
         self.assertEqual(output.strip(), expected_output)
-        assert(0)
 
+    # Test 'show interfaces status --verbose'
     def test_intf_status_verbose(self):
         result = self.runner.invoke(show.cli.commands["interfaces"].commands["status"], ["--verbose"])
+        print >> sys.stderr, result.output
+        expected_output = "Command: intfutil status"
+        self.assertEqual(result.output.split('\n')[0], expected_output)
+        assert(0)
 
     @classmethod
     def teardown_class(cls):
