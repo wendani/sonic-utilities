@@ -81,6 +81,13 @@ class TestIntfutil(TestCase):
         print >> sys.stderr, output
         self.assertEqual(output.strip(), expected_output)
 
+    # Test '--verbose' of single sub interface status
+    def test_single_subintf_status_verbose(self):
+        result = self.runner.invoke(show.cli.commands["subinterfaces"].commands["status"], ["Ethernet0.10", "--verbose"])
+        print >> sys.stderr, result.output
+        expected_output = "Command: intfutil status Ethernet0.10"
+        self.assertEqual(result.output.split('\n')[0], expected_output)
+
         assert(0)
 
     @classmethod
